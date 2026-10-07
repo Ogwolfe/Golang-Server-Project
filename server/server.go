@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 )
 
@@ -13,6 +14,7 @@ type Request struct {
 }
 
 func StartServer() {
+
 	//Setup Listener
 	ln, err := net.Listen("tcp", "localhost:8080")
 	if err != nil {
@@ -61,16 +63,27 @@ func handleConnection(c net.Conn) {
 			continue
 		}
 
-		//Process Request
-		response := append([]byte(req.Method), []byte(" ")...)
-		response = append(response, []byte(req.Path)...)
+		//Remove request from buffer
+		buffer = buffer[n:]
+
+		//Open file
+		file := append([]byte("./files/"), req.Path...)
+		contents, err := os.ReadFile(string(file))
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				c.Write([]byte("404: File not found"))
+				continue
+			}
+			return
+		}
+
+		response := append([]byte("OK"), []byte(" ")...)
+		response = append(response, contents...)
 		_, err = c.Write(response)
 		if err != nil {
 			return
 		}
 
-		//Remove request from buffer
-		buffer = buffer[n:]
 	}
 
 }
