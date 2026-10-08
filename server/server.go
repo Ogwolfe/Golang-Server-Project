@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -77,7 +78,15 @@ func handleConnection(c net.Conn) {
 			return
 		}
 
-		response := append([]byte("OK"), []byte(" ")...)
+		f, err := os.Stat(string(file))
+		if err != nil {
+			return
+		}
+
+		s := f.Size()
+
+		response := append([]byte("OK "), []byte(strconv.Itoa(int(s)))...)
+		response = append(response, []byte("\n")...)
 		response = append(response, contents...)
 		_, err = c.Write(response)
 		if err != nil {
