@@ -15,15 +15,7 @@ type Request struct {
 	Path   string
 }
 
-func StartServer() {
-
-	//Setup Listener
-	ln, err := net.Listen("tcp", "localhost:8080")
-	if err != nil {
-		panic(err)
-	}
-
-	defer ln.Close()
+func Serve(ln net.Listener) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
