@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strconv"
@@ -69,7 +70,8 @@ func handleConnection(c net.Conn) {
 
 		//Open file
 		file := append([]byte("./files/"), req.Path...)
-		contents, err := os.ReadFile(string(file))
+		fileChunk := make([]byte, 1024)
+		fp, err := os.Open(string(file))
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				c.Write([]byte("404: File not found"))
@@ -85,16 +87,32 @@ func handleConnection(c net.Conn) {
 
 		s := f.Size()
 
+		//Send response header
 		response := append([]byte("OK "), []byte(strconv.Itoa(int(s)))...)
 		response = append(response, []byte("\n")...)
-		response = append(response, contents...)
 		_, err = c.Write(response)
 		if err != nil {
 			return
 		}
 
-	}
+		//Stream file
+		for {
+			_, err := fp.Read(fileChunk)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
 
+				return
+			}
+
+			_, err = c.Write(fileChunk)
+			if err != nil {
+				return
+			}
+			clear(fileChunk)
+		}
+	}
 }
 
 func parseRequest(b []byte) (r Request, n int, e error) {
