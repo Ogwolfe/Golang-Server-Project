@@ -22,4 +22,3 @@ handleConnection() will maintain a dynamic slice to act as a buffer for read in 
 After each Read() it calls parseRequest(buffer). 
 If a complete request has been read into the buffer then it returns a filled out Request struct.
 
-
